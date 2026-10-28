@@ -1,5 +1,7 @@
-# The census microdata is the research input, not source. It is 409 MB
-# unpacked and never belongs in version control. Keep the archive locally
-# and fetch it from the source if a checkout needs to reproduce an import.
-PHC5_Public_microdata.dta
-PHC5_Public_microdata.zip
+# Survey microdata is research input, not source. These are the files an
+# administrator uploads, and they run to hundreds of megabytes. Keep them on
+# the machine that runs the import and fetch them from the source if a
+# checkout needs to reproduce one.
+*.dta
+*.sav
+*.zip

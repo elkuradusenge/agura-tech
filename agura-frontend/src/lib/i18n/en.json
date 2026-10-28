@@ -26,6 +26,8 @@
   "admin.catalogue.createdTag": "Created",
   "admin.catalogue.notAProduct": "Not a product",
   "admin.catalogue.pending": "Not created",
+  "admin.products.open": "Open",
+  "admin.products.blockedHint": "Add the items below to make this product trackable.",
   "admin.products.blocked": "Cannot become trackable yet",
   "admin.products.form.preview": "Preview as farmer",
   "admin.products.form.schedule": "Schedule builder",

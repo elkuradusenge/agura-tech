@@ -180,10 +180,12 @@ export const adminProductsApi = {
     api.put<ProductDetail>(`/admin/products/${id}`, body),
   markTrackable: (id: string) =>
     api.post<{ product: ProductRead; blockers: unknown[] }>(`/admin/products/${id}/mark-trackable`),
+  blockers: (id: string) =>
+    api.get<Array<{ field: string; translation_key: string }>>(`/admin/products/${id}/blockers`),
   pause: (id: string) => api.post<ProductRead>(`/admin/products/${id}/pause`),
   retire: (id: string) => api.post<ProductRead>(`/admin/products/${id}/retire`),
-  statusTable: () =>
-    api.get<Page<Record<string, unknown>>>("/admin/products/status-table"),
+  statusTable: (query?: { page?: number; page_size?: number }) =>
+    api.get<Page<Record<string, unknown>>>("/admin/products/status-table", { query }),
 };
 
 export const adminMonitoringApi = {

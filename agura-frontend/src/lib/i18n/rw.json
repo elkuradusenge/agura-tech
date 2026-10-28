@@ -26,6 +26,8 @@
   "admin.catalogue.createdTag": "Byaremwe",
   "admin.catalogue.notAProduct": "Si igicuruzwa",
   "admin.catalogue.pending": "Ntibyaremwe",
+  "admin.products.open": "Fungura",
+  "admin.products.blockedHint": "Ongeraho ibi bikurikira kugira ngo igicuruzwa gishobore gukurikiranwa.",
   "admin.products.blocked": "Ntibishobora kujya ku rutonde",
   "admin.products.form.preview": "Reba nk'umuhinzi",
   "admin.products.form.schedule": "Gahunda y'ibikorwa",

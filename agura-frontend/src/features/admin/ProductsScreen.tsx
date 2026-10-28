@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, CheckCircle2, PauseCircle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, BookOpen, CheckCircle2, Circle, PauseCircle, Plus, Trash2 } from "lucide-react";
 import { adminProductsApi } from "../../lib/api";
 import { useI18n } from "../../lib/i18n";
 import { formatDate } from "../../lib/utils";
@@ -87,6 +87,14 @@ function ProductEditor({ product, onClose }: { product: ProductDetail | null; on
   const [draft, setDraft] = useState<Draft>(() => draftFrom(product));
   const [busy, setBusy] = useState(false);
 
+  // The blockers belong to the product being edited, which is where an admin
+  // can act on them. Listing them in the table turned it into a wall of text.
+  const blockers = useQuery({
+    queryKey: ["admin-product-blockers", product?.id],
+    queryFn: () => adminProductsApi.blockers(product!.id),
+    enabled: Boolean(product?.id),
+  });
+
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
@@ -123,6 +131,7 @@ function ProductEditor({ product, onClose }: { product: ProductDetail | null; on
       if (publish) await adminProductsApi.markTrackable(saved.id);
       toast.push(publish ? t("admin.products.markTrackable") : t("common.saved"), "success");
       void queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-product-blockers"] });
       onClose();
     } catch (caught) {
       toast.push(caught instanceof Error ? caught.message : t("common.error"), "warning");
@@ -131,8 +140,27 @@ function ProductEditor({ product, onClose }: { product: ProductDetail | null; on
     }
   }
 
+  const openBlockers = blockers.data ?? [];
+
   return (
     <Card className="space-y-4">
+      {openBlockers.length ? (
+        <div className="rounded-xl border border-line bg-surface-raised p-4">
+          <h3 className="flex items-center gap-2 font-semibold text-warning">
+            <AlertTriangle aria-hidden className="h-4 w-4" />
+            {t("admin.products.blocked")}
+          </h3>
+          <p className="muted mt-1 text-sm">{t("admin.products.blockedHint")}</p>
+          <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+            {openBlockers.map((blocker) => (
+              <li key={blocker.field} className="flex items-start gap-2">
+                <Circle aria-hidden className="mt-1 h-2 w-2 shrink-0 text-warning" />
+                <span>{t(blocker.translation_key)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <ol className="flex flex-wrap gap-2" aria-label={t("admin.products.form.preview")}>
         {STEPS.map((key, index) => (
           <li key={key}>
@@ -374,8 +402,15 @@ export function AdminProductsScreen() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [editing, setEditing] = useState<string | null | undefined>(undefined);
+  const [page, setPage] = useState(1);
 
-  const table = useQuery({ queryKey: ["admin-products", "status-table"], queryFn: adminProductsApi.statusTable });
+  // Paged, because a survey can create more products than fit on one screen and
+  // an admin has to be able to reach every one of them to finish it off.
+  const table = useQuery({
+    queryKey: ["admin-products", "status-table", page],
+    queryFn: () => adminProductsApi.statusTable({ page }),
+  });
+  const totalPages = table.data?.pagination.total_pages ?? 1;
   const detail = useQuery({
     queryKey: ["admin-products", editing],
     queryFn: () => adminProductsApi.detail(editing as string),
@@ -417,7 +452,6 @@ export function AdminProductsScreen() {
                 <th scope="col">Status</th>
                 <th scope="col">Reviewer</th>
                 <th scope="col">Farmers</th>
-                <th scope="col">{t("admin.products.blocked")}</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -446,22 +480,9 @@ export function AdminProductsScreen() {
                     </td>
                     <td className="py-2">{typed.farmers_planting}</td>
                     <td className="py-2">
-                      {typed.blockers.length ? (
-                        <ul className="space-y-1 text-xs">
-                          {typed.blockers.map((blocker) => (
-                            <li key={blocker.field} className="text-warning">
-                              {t(blocker.translation_key)}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="muted">-</span>
-                      )}
-                    </td>
-                    <td className="py-2">
                       <div className="flex flex-wrap gap-1">
                         <Button variant="ghost" onClick={() => setEditing(typed.id)}>
-                          {t("common.save")}
+                          {t("admin.products.open")}
                         </Button>
                         <Button
                           variant="secondary"
@@ -495,6 +516,24 @@ export function AdminProductsScreen() {
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {totalPages > 1 ? (
+        <nav className="flex items-center justify-between gap-2" aria-label={t("admin.products.title")}>
+          <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+            {t("common.back")}
+          </Button>
+          <span className="muted text-xs">
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            disabled={page >= totalPages}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            {t("common.next")}
+          </Button>
+        </nav>
       ) : null}
     </div>
   );

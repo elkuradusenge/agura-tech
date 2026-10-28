@@ -26,6 +26,8 @@
   "admin.catalogue.createdTag": "Cree",
   "admin.catalogue.notAProduct": "Pas un produit",
   "admin.catalogue.pending": "Non cree",
+  "admin.products.open": "Ouvrir",
+  "admin.products.blockedHint": "Ajoutez les elements ci-dessous pour rendre ce produit suivable.",
   "admin.products.blocked": "Cannot become trackable yet",
   "admin.products.form.preview": "Preview as farmer",
   "admin.products.form.schedule": "Schedule builder",
