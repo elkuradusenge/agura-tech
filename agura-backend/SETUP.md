@@ -164,6 +164,58 @@ a `job.requeued` event. Two details make this safe:
   stage needs an in memory staging summary that cannot survive a restart. Cleaning
   and loading are both idempotent, so repeating them is safe.
 
+## Where the product catalogue comes from
+
+Admin uploads datasets. Nothing else is typed in by hand, including the list of
+products.
+
+The food catalogue, and the products built from it, are read out of the
+questionnaire the survey shipped with. `variable_dictionary` holds every variable
+and its label, and the three families that answer "what does this household grow"
+are the products:
+
+| Family | Meaning | Example |
+| --- | --- | --- |
+| `h24_*` | Field crops | `h24_01`, "Maize grown", becomes Maize |
+| `h25_*` | Vegetables | `h25_21`, "Mushroom grown", becomes Mushroom |
+| `h28b1_*` | Fruit trees | `h28b1_13`, "Grow Watermelon", becomes Watermelon |
+
+The name is the label with its qualifier removed, so a new census year that adds a
+crop needs no code change. `app/services/reference_service.py` holds the rules, and
+a small correction table for the few labels the paper form misspells (`Cocumber`
+is served as Cucumber). `h25_21` is grouped as fungi rather than vegetable, and
+fruit pairs with its count variable (`h28b1_13` with `h28b2_13`).
+
+The `FOOD_VARIABLES` list in `app/analysis/constants.py` is only a fallback for a
+survey with no dictionary yet.
+
+### Confirming the catalogue
+
+Once the analysis has produced aggregates, the admin is shown the products the
+questionnaire implies and confirms them:
+
+    GET  /api/v1/admin/surveys/{id}/product-candidates   preview, with counts
+    POST /api/v1/admin/surveys/{id}/products             create them
+
+Each candidate carries the evidence behind it, the number of households the survey
+found growing it out of the total, so a product is never a guess. Creation is
+idempotent: confirming twice creates nothing the second time. The catch-all "other"
+variable in each family is counted in the aggregates but is not created as a
+product, because nobody can plant "other vegetables".
+
+A new product is a draft with `needs_expert_review` set. The questionnaire cannot
+answer nutrition, recipes, irrigation or review, so those stay empty and are listed
+as blockers against the product. Guessing them would put invented advice in front of
+a farmer, so they are yours to fill in.
+
+### The same file cannot be imported twice
+
+Every upload is hashed and the checksum is compared against existing surveys. A
+byte-identical file is rejected with `409 upload.duplicate` and the stored copy is
+deleted, whatever name or year it was submitted under. Without this, one dataset
+uploaded twice doubles every household count in every aggregate, and nothing about
+the resulting report looks wrong.
+
 ## Seeding
 
 ```bash

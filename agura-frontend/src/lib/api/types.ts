@@ -351,6 +351,37 @@ export interface SurveyRead {
   updated_at: string;
 }
 
+export interface ProductCandidateRead {
+  source_variable: string;
+  food_item_id: string;
+  name_en: string;
+  group: string;
+  households_with_food: number;
+  households_total: number;
+  share: number;
+  is_catch_all: boolean;
+  product_id: string | null;
+  product_status: string | null;
+  missing_fields: string[];
+}
+
+export interface ProductCandidateResponse {
+  survey_id: string;
+  total: number;
+  creatable: number;
+  already_created: number;
+  skipped: number;
+  items: ProductCandidateRead[];
+}
+
+export interface ProductCreationResponse {
+  survey_id: string;
+  created: number;
+  already_existed: number;
+  skipped: number;
+  items: ProductCandidateRead[];
+}
+
 export interface JobRead {
   id: string;
   survey_id: string;

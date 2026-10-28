@@ -269,11 +269,17 @@ def test_deleting_a_survey_rolls_back_its_rows(client, admin_factory, synthetic_
     assert missing.json()["error"]["code"] == "survey.not_found"
 
 
-def test_surveys_list_supports_pagination(client, admin_factory, synthetic_dta):
+def test_surveys_list_supports_pagination(client, admin_factory, tmp_path):
+    from scripts.make_synthetic_dta import write_synthetic_dta
+
     admin = admin_factory()
     headers = admin_headers(admin)
     for index in range(2):
-        upload_survey(client, headers, synthetic_dta, name=f"Census {index}")
+        # A different seed, so the two uploads are not byte identical. An
+        # identical file is rejected rather than imported a second time, which
+        # is what the next test covers.
+        path = write_synthetic_dta(tmp_path / f"census_{index}.dta", seed=7 + index)
+        upload_survey(client, headers, str(path), name=f"Census {index}")
 
     response = client.get(
         f"{API}/admin/surveys", headers=headers, params={"page": 1, "page_size": 1}
@@ -282,6 +288,23 @@ def test_surveys_list_supports_pagination(client, admin_factory, synthetic_dta):
     body = response.json()
     assert body["pagination"]["total"] == 2
     assert len(body["items"]) == 1
+
+
+def test_uploading_the_same_file_twice_is_rejected(client, admin_factory, synthetic_dta):
+    admin = admin_factory()
+    headers = admin_headers(admin)
+
+    first = upload_survey(client, headers, synthetic_dta, name="Census 2022")
+    assert first.status_code == 202
+
+    # Same bytes, different name and year: the checksum is what identifies the
+    # dataset, so renaming must not get it in twice.
+    second = upload_survey(client, headers, synthetic_dta, name="Renamed copy", year=2023)
+    assert second.status_code == 409
+    assert second.json()["error"]["code"] == "upload.duplicate"
+
+    surveys = client.get(f"{API}/admin/surveys", headers=headers)
+    assert surveys.json()["pagination"]["total"] == 1
 
 
 def test_mapping_reuse_prefills_from_a_confirmed_survey(db, admin_factory, synthetic_dta):

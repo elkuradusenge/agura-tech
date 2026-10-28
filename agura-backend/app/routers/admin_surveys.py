@@ -13,7 +13,7 @@ from app.analysis import cleaning, ingest, mapping, pipeline
 from app.analysis.dictionary import load_dictionary
 from app.config import get_settings
 from app.core.deps import DbSession, client_context, require_permissions
-from app.core.errors import not_found, unprocessable
+from app.core.errors import conflict, not_found, unprocessable
 from app.core.pagination import Page, PageParamsDep, build_page
 from app.core.permissions import Permission
 from app.jobs import queue
@@ -30,17 +30,21 @@ from app.schemas.survey import (
     MappingConfirmRequest,
     MappingRowRead,
     MappingTableResponse,
+    ProductCandidateResponse,
+    ProductCreationResponse,
     QualityReportRead,
     SurveyRead,
     SurveyUploadResponse,
     ValueLabelRead,
 )
-from app.services import audit
+from app.services import audit, product_catalogue
 
 router = APIRouter(prefix="/admin", tags=["admin.surveys"])
 
 ReadSurveys = Annotated[Admin, Depends(require_permissions(Permission.SURVEYS_READ))]
 WriteSurveys = Annotated[Admin, Depends(require_permissions(Permission.SURVEYS_WRITE))]
+ProductRead = Annotated[Admin, Depends(require_permissions(Permission.PRODUCTS_READ))]
+ProductWrite = Annotated[Admin, Depends(require_permissions(Permission.PRODUCTS_WRITE))]
 
 SORTABLE = {
     "created_at": Survey.created_at,
@@ -100,6 +104,24 @@ def upload_survey(
         settings=settings,
         survey_id=survey_id,
     )
+
+    # The same file must not be imported twice. The checksum is of the bytes, so
+    # this catches a re-upload of an identical file under any name, which is how
+    # a duplicate dataset used to get in: two surveys over the same households
+    # silently double the population in every aggregate.
+    duplicate = db.scalar(
+        select(Survey).where(
+            Survey.checksum_sha256 == stored.checksum,
+            Survey.deleted_at.is_(None),
+        )
+    )
+    if duplicate is not None:
+        ingest.delete_stored_file(settings, stored.relative_path)
+        raise conflict(
+            "upload.duplicate",
+            "errors.upload.duplicate",
+            "This file has already been uploaded",
+        )
 
     survey = Survey(
         id=survey_id,
@@ -330,3 +352,98 @@ def confirm_mapping(
     assert refreshed is not None
     db.refresh(refreshed)
     return JobRead.model_validate(refreshed)
+
+
+def _candidate_payload(candidate: product_catalogue.ProductCandidate) -> dict:
+    return {
+        "source_variable": candidate.source_variable,
+        "food_item_id": candidate.food_item_id,
+        "name_en": candidate.name_en,
+        "group": candidate.group,
+        "households_with_food": candidate.households_with_food,
+        "households_total": candidate.households_total,
+        "share": candidate.share,
+        "is_catch_all": candidate.is_catch_all,
+        "product_id": candidate.product_id,
+        "product_status": candidate.product_status,
+        "missing_fields": candidate.missing_fields,
+    }
+
+
+@router.get(
+    "/surveys/{survey_id}/product-candidates",
+    response_model=ProductCandidateResponse,
+    summary="Preview the products this survey's questionnaire implies",
+)
+def list_product_candidates(
+    survey_id: uuid.UUID,
+    db: DbSession,
+    admin: ProductRead,
+) -> ProductCandidateResponse:
+    survey = _get_survey(db, survey_id)
+    try:
+        candidates = product_catalogue.product_candidates(db, survey.id)
+    except product_catalogue.AnalysisNotReady as exc:
+        raise conflict(
+            "products.analysis_not_ready",
+            "errors.products.analysis_not_ready",
+            "Run the analysis before creating products, they need the household evidence",
+        ) from exc
+
+    items = [_candidate_payload(candidate) for candidate in candidates]
+    return ProductCandidateResponse(
+        survey_id=survey.id,
+        total=len(items),
+        creatable=sum(1 for c in candidates if c.should_create),
+        already_created=sum(1 for c in candidates if c.product_id is not None),
+        skipped=sum(1 for c in candidates if c.is_catch_all and c.product_id is None),
+        items=items,
+    )
+
+
+@router.post(
+    "/surveys/{survey_id}/products",
+    response_model=ProductCreationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Confirm the product catalogue for this survey",
+)
+def confirm_products(
+    survey_id: uuid.UUID,
+    db: DbSession,
+    admin: ProductWrite,
+    context: Annotated[dict, Depends(client_context)],
+) -> ProductCreationResponse:
+    survey = _get_survey(db, survey_id)
+    try:
+        result = product_catalogue.create_products(db, survey.id, admin_id=admin.id)
+    except product_catalogue.AnalysisNotReady as exc:
+        raise conflict(
+            "products.analysis_not_ready",
+            "errors.products.analysis_not_ready",
+            "Run the analysis before creating products, they need the household evidence",
+        ) from exc
+
+    if result.created:
+        audit.record(
+            db,
+            action="products.create_from_survey",
+            entity_type="survey",
+            actor_id=admin.id,
+            actor_label=admin.email or admin.name,
+            entity_id=survey.id,
+            payload={
+                "created": len(result.created),
+                "names": [product.name_en for product in result.created],
+            },
+            ip_address=context["ip_address"],
+            user_agent=context["user_agent"],
+        )
+        db.commit()
+
+    return ProductCreationResponse(
+        survey_id=survey.id,
+        created=len(result.created),
+        already_existed=result.already_existed,
+        skipped=result.skipped,
+        items=[_candidate_payload(candidate) for candidate in result.candidates],
+    )

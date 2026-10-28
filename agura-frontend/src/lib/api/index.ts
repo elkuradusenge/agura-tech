@@ -16,6 +16,8 @@ import type {
   PlantingCreateResponse,
   PlantingDetail,
   PlantingSummary,
+  ProductCandidateResponse,
+  ProductCreationResponse,
   ProductDetail,
   ProductRead,
   QualityReport,
@@ -125,6 +127,10 @@ export const adminSurveysApi = {
     api.post<JobRead>(`/admin/jobs/${jobId}/mapping`, { updates }),
   quality: (surveyId: string) =>
     api.get<QualityReport>(`/admin/surveys/${surveyId}/quality-report`),
+  productCandidates: (surveyId: string) =>
+    api.get<ProductCandidateResponse>(`/admin/surveys/${surveyId}/product-candidates`),
+  createProducts: (surveyId: string) =>
+    api.post<ProductCreationResponse>(`/admin/surveys/${surveyId}/products`),
   dictionary: (surveyId: string) =>
     api.get<{ variables: Array<{ variable_name: string; label: string | null; section: string | null }> }>(
       `/admin/surveys/${surveyId}/dictionary`,

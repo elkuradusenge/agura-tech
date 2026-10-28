@@ -145,6 +145,76 @@ function MappingEditor({ jobId }: { jobId: string }) {
   );
 }
 
+
+function ProductCataloguePanel({ surveyId }: { surveyId: string }) {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+
+  const candidates = useQuery({
+    queryKey: ["admin-product-candidates", surveyId],
+    queryFn: () => adminSurveysApi.productCandidates(surveyId),
+    retry: false,
+  });
+
+  if (candidates.isLoading) return <Skeleton className="h-24" />;
+  if (!candidates.data) return null;
+
+  const { items, creatable, already_created: alreadyCreated, skipped } = candidates.data;
+
+  async function confirm() {
+    setBusy(true);
+    try {
+      const result = await adminSurveysApi.createProducts(surveyId);
+      toast.push(t("admin.catalogue.created", { count: result.created }), "success");
+      void queryClient.invalidateQueries({ queryKey: ["admin-product-candidates", surveyId] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    } catch (caught) {
+      toast.push(caught instanceof Error ? caught.message : t("common.error"), "warning");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-semibold">{t("admin.catalogue.title")}</h2>
+        {creatable === 0 ? <Badge tone="success">{t("common.done")}</Badge> : null}
+      </div>
+      <p className="muted text-sm">{t("admin.catalogue.hint")}</p>
+      <div className="flex flex-wrap gap-2 text-xs">
+        <Badge tone="neutral">{t("admin.catalogue.creatable", { count: creatable })}</Badge>
+        <Badge tone="neutral">{t("admin.catalogue.existing", { count: alreadyCreated })}</Badge>
+        <Badge tone="neutral">{t("admin.catalogue.skipped", { count: skipped })}</Badge>
+      </div>
+      {items.length === 0 ? <p className="muted text-sm">{t("common.empty")}</p> : null}
+      <ul className="max-h-72 space-y-2 overflow-y-auto" aria-label={t("admin.catalogue.title")}>
+        {items.map((item) => (
+          <li key={item.source_variable} className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="min-w-0 flex-1 truncate">{item.name_en}</span>
+            <Badge tone="neutral">{item.group}</Badge>
+            <span className="muted text-xs">
+              {formatNumber(item.households_with_food)} / {formatNumber(item.households_total)}
+            </span>
+            {item.product_id ? <Badge tone="success">{t("admin.catalogue.createdTag")}</Badge> : null}
+            {!item.product_id && item.is_catch_all ? (
+              <Badge tone="neutral">{t("admin.catalogue.notAProduct")}</Badge>
+            ) : null}
+            {!item.product_id && !item.is_catch_all ? (
+              <Badge tone="warning">{t("admin.catalogue.pending")}</Badge>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <Button disabled={creatable === 0} loading={busy} onClick={() => void confirm()}>
+        {t("admin.catalogue.confirm")}
+      </Button>
+    </Card>
+  );
+}
+
 export function SurveyDataScreen() {
   const { t, language } = useI18n();
   const queryClient = useQueryClient();
@@ -227,6 +297,9 @@ export function SurveyDataScreen() {
       ) : null}
 
       {job.data && job.data.stage === "mapped" ? <MappingEditor jobId={job.data.id} /> : null}
+      {job.data && job.data.stage === "scored" ? (
+        <ProductCataloguePanel surveyId={job.data.survey_id} />
+      ) : null}
 
       <div className="space-y-2">
         <h2 className="font-semibold">{t("admin.survey.title")}</h2>

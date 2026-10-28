@@ -711,11 +711,12 @@ def run_aggregation(db: Session, survey: Survey) -> AggregationResult:
     clear_aggregates(db, survey.id)
 
     # The food and diversity aggregates join against food_items, so an empty
-    # reference table silently produces no rows at all. Seeding is idempotent and
-    # makes the pipeline independent of a separate setup step.
-    seeded = reference_service.seed_food_items(db)
+    # reference table silently produces no rows at all. The names come from this
+    # survey's own questionnaire, so seeding is both idempotent and the reason a
+    # new census year needs no code change.
+    seeded = reference_service.seed_food_items(db, survey_id=survey.id, overwrite=True)
     if seeded:
-        logger.info("Seeded %s food reference items before aggregating", seeded)
+        logger.info("Seeded %s food reference items from the questionnaire", seeded)
 
     lookup = food_lookup(db, survey.id)
     result.foods_scored = len(lookup)

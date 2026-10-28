@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import JobStage, JobStatus, PlatformGroup, SurveyStatus
+from app.models.enums import JobStage, JobStatus, PlatformGroup, ProductStatus, SurveyStatus
 
 
 class SurveyRead(BaseModel):
@@ -133,3 +133,36 @@ class QualityReportRead(BaseModel):
     missing_rates: dict[str, Any]
     warnings: list[str]
     created_at: datetime
+
+
+class ProductCandidateRead(BaseModel):
+    """One product the questionnaire implies, with the survey evidence behind it."""
+
+    source_variable: str
+    food_item_id: uuid.UUID
+    name_en: str
+    group: str
+    households_with_food: int
+    households_total: int
+    share: float
+    is_catch_all: bool
+    product_id: uuid.UUID | None = None
+    product_status: ProductStatus | None = None
+    missing_fields: list[str] = []
+
+
+class ProductCandidateResponse(BaseModel):
+    survey_id: uuid.UUID
+    total: int
+    creatable: int
+    already_created: int
+    skipped: int
+    items: list[ProductCandidateRead]
+
+
+class ProductCreationResponse(BaseModel):
+    survey_id: uuid.UUID
+    created: int
+    already_existed: int
+    skipped: int
+    items: list[ProductCandidateRead]
