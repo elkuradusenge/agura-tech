@@ -153,3 +153,32 @@ describe("admin product list", () => {
     expect(screen.getByText(rw["products.missing.photo"])).toBeInTheDocument();
   });
 });
+
+describe("product editor", () => {
+  it("offers every field the trackable check asks for", async () => {
+    renderScreen();
+
+    await screen.findByText("Mushroom");
+    fireEvent.click(screen.getAllByRole("button", { name: rw["admin.products.open"] })[0]);
+
+    // A benefit is required for each age group, so each gets its own field
+    // instead of the single "adults" box that made the rest unreachable.
+    const ageGroupLabels = [
+      rw["admin.products.age.kids_1_5"],
+      rw["admin.products.age.children_6_12"],
+      rw["admin.products.age.young_13_24"],
+      rw["admin.products.age.adults"],
+      rw["admin.products.age.older_60_plus"],
+    ];
+    for (const label of ageGroupLabels) {
+      expect(await screen.findByLabelText(label)).toBeInTheDocument();
+    }
+
+    // Nutrition and recipes live on their own step.
+    fireEvent.click(
+      screen.getByRole("button", { name: new RegExp(rw["admin.products.form.nutrition"]) }),
+    );
+    expect(await screen.findByText(rw["products.nutrients"])).toBeInTheDocument();
+    expect(screen.getByText(rw["products.recipes"])).toBeInTheDocument();
+  });
+});

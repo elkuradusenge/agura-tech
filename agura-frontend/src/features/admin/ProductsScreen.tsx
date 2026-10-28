@@ -20,7 +20,20 @@ const STATUS_TONE: Record<ProductStatus, "neutral" | "success" | "warning" | "da
   retired: "danger",
 };
 
-const STEPS = ["admin.products.form.section1", "admin.products.form.section2", "admin.products.form.schedule"];
+const STEPS = [
+  "admin.products.form.section1",
+  "admin.products.form.section2",
+  "admin.products.form.schedule",
+  "admin.products.form.nutrition",
+];
+
+const AGE_GROUP_KEYS = [
+  "kids_1_5",
+  "children_6_12",
+  "young_13_24",
+  "adults",
+  "older_60_plus",
+] as const;
 
 function emptyTask(): ScheduleTask {
   return {
@@ -52,7 +65,13 @@ interface Draft {
   review_date: string;
   time_to_harvest_min_days: string;
   time_to_harvest_max_days: string;
+  photo_url: string;
+  place_type: string;
+  irrigation_frequency: string;
+  irrigation_time_of_day: string;
   benefits: ProductDetail["benefits"];
+  nutrients: Array<{ nutrient: string; amount_per_100g: string; unit: string }>;
+  recipes: Array<{ name: string; steps: string }>;
   tasks: ScheduleTask[];
 }
 
@@ -72,9 +91,24 @@ function draftFrom(product: ProductDetail | null): Draft {
     review_date: product?.review_date ?? "",
     time_to_harvest_min_days: product?.time_to_harvest_min_days?.toString() ?? "",
     time_to_harvest_max_days: product?.time_to_harvest_max_days?.toString() ?? "",
-    benefits: product?.benefits ?? [
-      { age_group: "adults", benefit_text: "" },
-    ],
+    photo_url: product?.photo_url ?? "",
+    place_type: product?.place_type ?? "",
+    irrigation_frequency: product?.irrigation_frequency ?? "",
+    irrigation_time_of_day: product?.irrigation_time_of_day ?? "",
+    // One row per age group is what the trackable check requires, so start with
+    // all five rather than making the admin discover the requirement.
+    benefits: AGE_GROUP_KEYS.map((ageGroup) => ({
+      age_group: ageGroup,
+      benefit_text:
+        product?.benefits.find((benefit) => benefit.age_group === ageGroup)?.benefit_text ?? "",
+    })),
+    nutrients:
+      product?.nutrients.map((nutrient) => ({
+        nutrient: nutrient.nutrient,
+        amount_per_100g: nutrient.amount_per_100g?.toString() ?? "",
+        unit: nutrient.unit ?? "",
+      })) ?? [],
+    recipes: product?.recipes.map((recipe) => ({ name: recipe.name, steps: recipe.steps ?? "" })) ?? [],
     tasks: product?.schedule_tasks ?? [emptyTask()],
   };
 }
@@ -115,6 +149,20 @@ function ProductEditor({ product, onClose }: { product: ProductDetail | null; on
       review_date: draft.review_date || null,
       time_to_harvest_min_days: draft.time_to_harvest_min_days ? Number(draft.time_to_harvest_min_days) : null,
       time_to_harvest_max_days: draft.time_to_harvest_max_days ? Number(draft.time_to_harvest_max_days) : null,
+      photo_url: draft.photo_url || null,
+      place_type: draft.place_type || null,
+      irrigation_frequency: draft.irrigation_frequency || null,
+      irrigation_time_of_day: draft.irrigation_time_of_day || null,
+      nutrients: draft.nutrients
+        .filter((nutrient) => nutrient.nutrient.trim())
+        .map((nutrient) => ({
+          nutrient: nutrient.nutrient,
+          amount_per_100g: nutrient.amount_per_100g ? Number(nutrient.amount_per_100g) : null,
+          unit: nutrient.unit || null,
+        })),
+      recipes: draft.recipes
+        .filter((recipe) => recipe.name.trim())
+        .map((recipe) => ({ name: recipe.name, steps: recipe.steps || null })),
       benefits: draft.benefits.filter((benefit) => (benefit.benefit_text ?? "").trim()),
       schedule_tasks: draft.tasks
         .filter((task) => task.instruction_text.trim())
@@ -191,16 +239,48 @@ function ProductEditor({ product, onClose }: { product: ProductDetail | null; on
           <Field label="Description (English)" htmlFor="descEn">
             <Textarea id="descEn" rows={3} value={draft.description_en} onChange={(event) => set("description_en", event.target.value)} />
           </Field>
-          <Field label={t("products.benefits")} htmlFor="benefitAdults">
-            <Textarea
-              id="benefitAdults"
-              rows={2}
-              value={draft.benefits[0]?.benefit_text ?? ""}
-              onChange={(event) =>
-                set("benefits", [{ age_group: "adults", benefit_text: event.target.value }, ...draft.benefits.slice(1)])
-              }
-            />
-          </Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t("admin.products.form.photo")} htmlFor="photoUrl">
+              <Input
+                id="photoUrl"
+                type="url"
+                value={draft.photo_url}
+                onChange={(event) => set("photo_url", event.target.value)}
+              />
+            </Field>
+            <Field label={t("admin.products.form.place")} htmlFor="placeType">
+              <Input
+                id="placeType"
+                value={draft.place_type}
+                onChange={(event) => set("place_type", event.target.value)}
+              />
+            </Field>
+          </div>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">{t("products.benefits")}</legend>
+            <p className="muted text-xs">{t("admin.products.form.benefitsHint")}</p>
+            {draft.benefits.map((benefit, index) => (
+              <Field
+                key={benefit.age_group}
+                label={t(`admin.products.age.${benefit.age_group}`)}
+                htmlFor={`benefit-${benefit.age_group}`}
+              >
+                <Textarea
+                  id={`benefit-${benefit.age_group}`}
+                  rows={2}
+                  value={benefit.benefit_text ?? ""}
+                  onChange={(event) =>
+                    set(
+                      "benefits",
+                      draft.benefits.map((item, i) =>
+                        i === index ? { ...item, benefit_text: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+            ))}
+          </fieldset>
         </div>
       ) : null}
 
@@ -228,6 +308,29 @@ function ProductEditor({ product, onClose }: { product: ProductDetail | null; on
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t("products.irrigation")} htmlFor="irrigation" required>
               <Input id="irrigation" value={draft.irrigation_method} onChange={(event) => set("irrigation_method", event.target.value)} />
+            </Field>
+            <Field label={t("admin.products.form.irrigationFrequency")} htmlFor="irrigationFrequency">
+              <Select
+                id="irrigationFrequency"
+                value={draft.irrigation_frequency}
+                onChange={(event) => set("irrigation_frequency", event.target.value)}
+              >
+                <option value="">-</option>
+                <option value="daily">{t("admin.products.form.daily")}</option>
+                <option value="weekly">{t("admin.products.form.weekly")}</option>
+                <option value="custom">{t("admin.products.form.custom")}</option>
+              </Select>
+            </Field>
+            <Field label={t("admin.products.form.irrigationTime")} htmlFor="irrigationTime">
+              <Select
+                id="irrigationTime"
+                value={draft.irrigation_time_of_day}
+                onChange={(event) => set("irrigation_time_of_day", event.target.value)}
+              >
+                <option value="">-</option>
+                <option value="morning">{t("admin.products.form.morning")}</option>
+                <option value="evening">{t("admin.products.form.evening")}</option>
+              </Select>
             </Field>
             <Field label={t("products.harvest")} htmlFor="harvestMethod" required>
               <Input id="harvestMethod" value={draft.harvest_method} onChange={(event) => set("harvest_method", event.target.value)} />
@@ -373,6 +476,142 @@ function ProductEditor({ product, onClose }: { product: ProductDetail | null; on
           <Button variant="secondary" icon={<Plus aria-hidden className="h-4 w-4" />} onClick={() => set("tasks", [...draft.tasks, emptyTask()])}>
             {t("admin.products.form.schedule")}
           </Button>
+        </div>
+      ) : null}
+
+      {step === 3 ? (
+        <div className="space-y-4">
+          <section className="space-y-2">
+            <h3 className="font-semibold">{t("products.nutrients")}</h3>
+            <p className="muted text-xs">{t("admin.products.form.nutrientsHint")}</p>
+            <ul className="space-y-2">
+              {draft.nutrients.map((nutrient, index) => (
+                <li key={`nutrient-${index}`} className="grid gap-2 sm:grid-cols-4">
+                  <Field label={t("admin.products.form.nutrient")} htmlFor={`nutrient-${index}`}>
+                    <Input
+                      id={`nutrient-${index}`}
+                      value={nutrient.nutrient}
+                      onChange={(event) =>
+                        set(
+                          "nutrients",
+                          draft.nutrients.map((item, i) =>
+                            i === index ? { ...item, nutrient: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field label={t("admin.products.form.per100g")} htmlFor={`amount-${index}`}>
+                    <Input
+                      id={`amount-${index}`}
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={nutrient.amount_per_100g}
+                      onChange={(event) =>
+                        set(
+                          "nutrients",
+                          draft.nutrients.map((item, i) =>
+                            i === index ? { ...item, amount_per_100g: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field label={t("admin.products.form.unit")} htmlFor={`unit-${index}`}>
+                    <Input
+                      id={`unit-${index}`}
+                      value={nutrient.unit}
+                      onChange={(event) =>
+                        set(
+                          "nutrients",
+                          draft.nutrients.map((item, i) =>
+                            i === index ? { ...item, unit: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                  <div className="flex items-end">
+                    <Button
+                      variant="ghost"
+                      icon={<Trash2 aria-hidden className="h-4 w-4" />}
+                      onClick={() =>
+                        set("nutrients", draft.nutrients.filter((_, i) => i !== index))
+                      }
+                    >
+                      {t("common.cancel")}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Button
+              variant="secondary"
+              icon={<Plus aria-hidden className="h-4 w-4" />}
+              onClick={() =>
+                set("nutrients", [...draft.nutrients, { nutrient: "", amount_per_100g: "", unit: "" }])
+              }
+            >
+              {t("admin.products.form.addNutrient")}
+            </Button>
+          </section>
+
+          <section className="space-y-2">
+            <h3 className="font-semibold">{t("products.recipes")}</h3>
+            <p className="muted text-xs">{t("admin.products.form.recipesHint")}</p>
+            <ul className="space-y-2">
+              {draft.recipes.map((recipe, index) => (
+                <li key={`recipe-${index}`} className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+                  <Field label={t("admin.products.form.recipeName")} htmlFor={`recipe-${index}`}>
+                    <Input
+                      id={`recipe-${index}`}
+                      value={recipe.name}
+                      onChange={(event) =>
+                        set(
+                          "recipes",
+                          draft.recipes.map((item, i) =>
+                            i === index ? { ...item, name: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field label={t("admin.products.form.recipeSteps")} htmlFor={`steps-${index}`}>
+                    <Textarea
+                      id={`steps-${index}`}
+                      rows={2}
+                      value={recipe.steps}
+                      onChange={(event) =>
+                        set(
+                          "recipes",
+                          draft.recipes.map((item, i) =>
+                            i === index ? { ...item, steps: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                  <div className="flex items-end">
+                    <Button
+                      variant="ghost"
+                      icon={<Trash2 aria-hidden className="h-4 w-4" />}
+                      onClick={() => set("recipes", draft.recipes.filter((_, i) => i !== index))}
+                    >
+                      {t("common.cancel")}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Button
+              variant="secondary"
+              icon={<Plus aria-hidden className="h-4 w-4" />}
+              onClick={() => set("recipes", [...draft.recipes, { name: "", steps: "" }])}
+            >
+              {t("admin.products.form.addRecipe")}
+            </Button>
+          </section>
         </div>
       ) : null}
 

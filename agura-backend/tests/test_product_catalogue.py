@@ -283,3 +283,38 @@ class TestCatalogueApi:
         response = client.post(f"{API}/admin/surveys/{survey.id}/products", headers=headers)
         assert response.status_code == 409
         assert response.json()["error"]["code"] == "products.analysis_not_ready"
+
+
+class TestCompletingASurveyProduct:
+    """A product the survey produced can be finished off and published."""
+
+    def test_a_draft_from_the_questionnaire_can_be_completed_and_made_trackable(
+        self, db, client, admin_factory, survey_with_questionnaire
+    ):
+        from app.models.product import Product
+        from tests.test_products import COMPLETE_PRODUCT
+
+        product_catalogue.create_products(db, survey_with_questionnaire.id)
+        mushroom = db.query(Product).filter(Product.name_en == "Mushroom").one()
+        headers = admin_headers(admin_factory())
+
+        # It arrives incomplete, which is the point: the questionnaire knows the
+        # crop exists but not its nutrition, recipes or who reviewed it.
+        blockers = client.get(
+            f"{API}/admin/products/{mushroom.id}/blockers", headers=headers
+        ).json()
+        assert blockers
+
+        payload = {**COMPLETE_PRODUCT, "name_en": "Mushroom"}
+        updated = client.put(f"{API}/admin/products/{mushroom.id}", json=payload, headers=headers)
+        assert updated.status_code == 200
+
+        assert (
+            client.get(f"{API}/admin/products/{mushroom.id}/blockers", headers=headers).json() == []
+        )
+
+        published = client.post(
+            f"{API}/admin/products/{mushroom.id}/mark-trackable", headers=headers
+        )
+        assert published.status_code == 200
+        assert published.json()["product"]["status"] == "trackable"

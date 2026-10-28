@@ -173,6 +173,17 @@ def safe_quiet_hours() -> dict[str, str]:
     return {"start": "23:00", "end": "23:30"}
 
 
+def seed_reminder_settings(db) -> None:
+    """Seed the reminder settings, then move quiet hours off the current hour.
+
+    The shipped default window is 21:00 to 05:00, so running this suite in the
+    evening suppressed every reminder and failed these tests for a reason that
+    had nothing to do with the code under test.
+    """
+    settings_service.seed_defaults(db)
+    settings_service.set_value(db, "reminders.quiet_hours", safe_quiet_hours())
+
+
 def due_soon(minutes: int = 5) -> datetime:
     """A due time inside the reminder window and in the future."""
     return datetime.now(KIGALI) + timedelta(minutes=minutes)
@@ -180,7 +191,7 @@ def due_soon(minutes: int = 5) -> datetime:
 
 def test_due_task_creates_a_notification(db, farmer_context):
     user, _product, planting = farmer_context
-    settings_service.seed_defaults(db)
+    seed_reminder_settings(db)
     add_task(db, planting, due_at=due_soon())
 
     result = reminders.run_once(db, get_settings())
@@ -198,7 +209,7 @@ def test_due_task_creates_a_notification(db, farmer_context):
 
 def test_evening_task_uses_the_evening_template(db, farmer_context):
     user, _product, planting = farmer_context
-    settings_service.seed_defaults(db)
+    seed_reminder_settings(db)
     add_task(db, planting, due_at=due_soon(), time_of_day=TimeOfDay.EVENING)
 
     reminders.run_once(db, get_settings())
@@ -304,7 +315,7 @@ def test_sms_is_not_sent_when_disabled(db, farmer_context):
     _user, _product, planting = farmer_context
     settings = get_settings()
     settings.sms_enabled = False
-    settings_service.seed_defaults(db)
+    seed_reminder_settings(db)
     add_task(db, planting, due_at=due_soon())
 
     try:
@@ -323,7 +334,7 @@ def test_sms_is_queued_with_the_console_provider_when_enabled(db, farmer_context
     settings = get_settings()
     settings.sms_enabled = True
     settings.sms_provider = "console"
-    settings_service.seed_defaults(db)
+    seed_reminder_settings(db)
     add_task(db, planting, due_at=due_soon())
 
     try:
@@ -413,7 +424,7 @@ def test_one_farmer_cannot_touch_another_farmers_task(client, db, farmer_context
 def test_notification_is_delivered_with_rendered_text(db, client, farmer_context):
     """The app renders the admin editable template, not a hardcoded key."""
     user, _product, planting = farmer_context
-    settings_service.seed_defaults(db)
+    seed_reminder_settings(db)
     add_task(db, planting, due_at=due_soon())
 
     reminders.run_once(db, get_settings())
@@ -432,7 +443,7 @@ def test_resolved_text_follows_the_farmer_language(db, client, farmer_context):
     user, _product, planting = farmer_context
     user.language = Language.EN
     db.commit()
-    settings_service.seed_defaults(db)
+    seed_reminder_settings(db)
     add_task(db, planting, due_at=due_soon())
     reminders.run_once(db, get_settings())
 
@@ -448,7 +459,7 @@ def test_edited_template_text_reaches_the_app(db, client, farmer_context):
     user, _product, planting = farmer_context
     user.language = Language.EN
     db.commit()
-    settings_service.seed_defaults(db)
+    seed_reminder_settings(db)
     add_task(db, planting, due_at=due_soon())
     reminders.run_once(db, get_settings())
 
