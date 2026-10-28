@@ -1,0 +1,182 @@
+@import "./tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: theme("fontFamily.sans");
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply min-h-screen bg-canvas text-ink;
+    transition:
+      background-color var(--duration-base) var(--ease-material),
+      color var(--duration-base) var(--ease-material);
+  }
+
+  /* Headings use the secondary colour; body copy uses the deep one. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-ink-heading;
+    letter-spacing: -0.01em;
+  }
+
+  /* A visible focus ring on every interactive element, in both themes. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-text ring-offset-2 ring-offset-canvas;
+  }
+
+  /* Stop iOS zooming the page when a control is focused. */
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px;
+    font-family: inherit;
+  }
+
+  ::selection {
+    background-color: var(--primary-tint-strong);
+    color: var(--ink);
+  }
+}
+
+@layer components {
+  /* 44px minimum touch target, on the 8px grid. */
+  .tap-target {
+    @apply min-h-tap min-w-tap;
+  }
+
+  /* Card: 12px radius, 1px hairline, soft elevation, generous padding. */
+  .card {
+    @apply rounded-card border border-line bg-surface p-5 shadow-e1;
+    transition:
+      border-color var(--duration-fast) var(--ease-material),
+      box-shadow var(--duration-base) var(--ease-material),
+      background-color var(--duration-base) var(--ease-material);
+  }
+
+  .card-interactive {
+    @apply hover:border-primary hover:shadow-e2;
+  }
+
+  /* Secondary text, never the only carrier of meaning. */
+  .muted {
+    @apply text-ink-muted;
+  }
+
+  /* Large containers and the landing sections. */
+  .panel {
+    @apply rounded-panel border border-line bg-surface shadow-e1;
+  }
+
+  .field {
+    @apply w-full rounded-card border border-line-strong bg-surface px-3.5 py-2.5 text-ink
+      placeholder:text-ink-muted;
+    transition:
+      border-color var(--duration-fast) var(--ease-material),
+      box-shadow var(--duration-fast) var(--ease-material);
+  }
+
+  .field:hover {
+    @apply border-primary;
+  }
+
+  .field:focus {
+    @apply border-primary-text outline-none ring-2 ring-primary-text;
+  }
+
+  .field[aria-invalid="true"] {
+    @apply border-danger;
+  }
+
+  /* Section rhythm for the marketing page, on an 8px grid. */
+  .section {
+    @apply px-4 py-16 sm:px-6 lg:py-24;
+  }
+
+  .section-inner {
+    @apply mx-auto w-full max-w-content;
+  }
+}
+
+/* Press and hover feedback, 150 to 250 ms. */
+@layer utilities {
+  .press {
+    transition:
+      transform var(--duration-fast) var(--ease-material),
+      background-color var(--duration-fast) var(--ease-material),
+      border-color var(--duration-fast) var(--ease-material),
+      box-shadow var(--duration-fast) var(--ease-material);
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  .ease-material {
+    transition-timing-function: var(--ease-material);
+  }
+}
+
+/* Chart series colours live in tokens.css, not in the components. */
+.chart-series-1 {
+  fill: var(--chart-1);
+  stroke: var(--chart-1);
+}
+.chart-series-2 {
+  fill: var(--chart-2);
+  stroke: var(--chart-2);
+}
+.chart-series-3 {
+  fill: var(--chart-3);
+  stroke: var(--chart-3);
+}
+.chart-series-4 {
+  fill: var(--chart-4);
+  stroke: var(--chart-4);
+}
+.chart-series-5 {
+  fill: var(--chart-5);
+  stroke: var(--chart-5);
+}
+.chart-series-6 {
+  fill: var(--chart-6);
+  stroke: var(--chart-6);
+}
+
+.chart-grid line {
+  stroke: var(--line);
+}
+
+.chart-axis text {
+  fill: var(--ink-muted);
+}
+
+/* Respect a reduced motion preference, and keep low data mode calm. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .press:active {
+    transform: none;
+  }
+}
+
+html[data-low-data="true"] img {
+  display: none;
+}

@@ -1,0 +1,121 @@
+/**
+ * Design tokens. This is the only file in the application that names a colour.
+ *
+ * Everything else uses the semantic names below through Tailwind utilities
+ * (bg-surface, text-ink-heading, border-line, ...) so a component never has to
+ * know whether it is rendering in light or dark mode: the tokens already resolve
+ * per theme.
+ *
+ * Palette, from the brand sheet:
+ *   primary   #3C7A89   secondary #2E4756   deep #16262E
+ * Every other value is a tint or shade derived from those three, plus a status
+ * set kept deliberately separate so it never competes with the brand.
+ *
+ * Contrast was measured pair by pair against WCAG AA, 4.5:1 for text and 3:1 for
+ * focus rings, in both themes. Do not change a value here without re-checking:
+ *   pnpm test  (see src/test/contrast.test.ts, which reads this file)
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Brand, exactly as specified. */
+  --brand-primary: #3c7a89;
+  --brand-secondary: #2e4756;
+  --brand-deep: #16262e;
+
+  /* Primary, derived. Hover darkens rather than lightens so that white text on a
+     filled button keeps 4.5:1; the lighter tints are used for the surfaces where
+     the label is dark ink, which is where "lighter for hover and selected" is
+     both wanted and safe. */
+  --primary: var(--brand-primary);
+  --primary-hover: #356e7c;
+  --primary-active: #2f6170;
+  --primary-text: #316674;
+  --primary-tint: #e3eff2;
+  --primary-tint-strong: #d3e6ea;
+  --on-primary: #ffffff;
+
+  /* Surfaces: a neutral light ground with a slight teal tint, white cards. */
+  --canvas: #f1f6f7;
+  --surface: #ffffff;
+  --surface-raised: #e8f0f2;
+  --surface-translucent: rgb(255 255 255 / 0.9);
+  --canvas-translucent: rgb(241 246 247 / 0.9);
+  --line: rgb(46 71 86 / 0.14);
+  --line-strong: rgb(46 71 86 / 0.26);
+
+  /* Text. Deep for body, secondary for headings, a mid tint for secondary copy. */
+  --ink: var(--brand-deep);
+  --ink-heading: var(--brand-secondary);
+  --ink-muted: #556b77;
+
+  /* Status, kept separate from the brand so it is never read as decoration. */
+  --success: #1f7a4d;
+  --success-tint: #e3f3e9;
+  --warning: #8a5a00;
+  --warning-tint: #fcf1da;
+  --danger: #b3261e;
+  --danger-tint: #fbe7e5;
+
+  /* Elevation: soft and low, Material rather than drop shadow. */
+  --shadow-e1: 0 1px 2px rgb(22 38 46 / 0.06), 0 1px 3px rgb(22 38 46 / 0.08);
+  --shadow-e2: 0 2px 6px rgb(22 38 46 / 0.08), 0 8px 24px rgb(22 38 46 / 0.1);
+  --shadow-e3: 0 12px 40px rgb(22 38 46 / 0.18);
+
+  /* Categorical chart series, derived from primary and secondary. */
+  --chart-1: #3c7a89;
+  --chart-2: #2e4756;
+  --chart-3: #6ba3ae;
+  --chart-4: #5d7f8c;
+  --chart-5: #9ccdd7;
+  --chart-6: #43697a;
+
+  /* Motion. Material easing, 150 to 250 ms. */
+  --ease-material: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 250ms;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Primary keeps its fill so buttons stay the brand colour, but text use needs a
+     much lighter tint: #3c7a89 as small text on the deep ground is only 3.2:1. */
+  --primary-text: #9ccdd7;
+  --primary-tint: #24404b;
+  --primary-tint-strong: #2e4f5c;
+  --primary-hover: #356e7c;
+  --primary-active: #2f6170;
+
+  --canvas: var(--brand-deep);
+  --surface: var(--brand-secondary);
+  --surface-raised: #22323b;
+  --surface-translucent: rgb(46 71 86 / 0.9);
+  --canvas-translucent: rgb(22 38 46 / 0.9);
+  --line: rgb(156 205 215 / 0.16);
+  --line-strong: rgb(156 205 215 / 0.3);
+
+  --ink: #e8f0f2;
+  --ink-heading: #ffffff;
+  --ink-muted: #a9bfc7;
+
+  --success: #5fd08c;
+  --success-tint: #17382a;
+  --warning: #f2c14e;
+  --warning-tint: #3a2e12;
+  --danger: #f6a79f;
+  --danger-tint: #3d1f1d;
+
+  --shadow-e1: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.24);
+  --shadow-e2: 0 2px 6px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.28);
+  --shadow-e3: 0 12px 40px rgb(0 0 0 / 0.44);
+
+  --chart-1: #6ba3ae;
+  --chart-2: #9ccdd7;
+  --chart-3: #3c7a89;
+  --chart-4: #c3e2e8;
+  --chart-5: #5d7f8c;
+  --chart-6: #7fb2bd;
+}

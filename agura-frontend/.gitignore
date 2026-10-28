@@ -1,0 +1,19 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+!.env.example
+
+# Generated from the backend OpenAPI schema, committed on purpose.
+src/lib/api/schema.ts
+
+# Tooling
+coverage/
+.vite/
+*.log
+.DS_Store
+
+# TypeScript incremental build info
+*.tsbuildinfo
