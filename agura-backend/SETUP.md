@@ -219,25 +219,30 @@ the resulting report looks wrong.
 ## Seeding
 
 ```bash
-python -m scripts.seed              # settings, food items, message templates, draft product, admin
-python -m scripts.seed_demo_product # one complete, trackable demo product
+python -m scripts.seed   # settings, food items, message templates, admin
 ```
 
-The real Oyster mushroom product is always created as a **draft** with empty benefits
-and nutrient values, because health statements need RAB review. It never becomes
-trackable on its own.
+The food catalogue is not part of the seed. `run_aggregation` derives it from the
+survey's own questionnaire, because the food and diversity aggregates join against
+`food_items` and an empty table produces no rows at all, silently. It also warns when
+an aggregate comes out empty, so a missing reference table or an unconfirmed mapping
+shows up in the job summary instead of in a blank screen.
 
-`run_aggregation` seeds the food reference items itself, because the food and
-diversity aggregates join against `food_items` and an empty table produces no rows
-at all, silently. It also warns when an aggregate comes out empty, so a missing
-reference table or an unconfirmed mapping shows up in the job summary instead of in
-a blank screen.
+### Demo fixture scripts
 
-`seed_demo_product` adds a second product, "Demo: Orange-fleshed sweet potato", and
-publishes it through the same `product_service.mark_trackable` rule the console uses.
-Every health statement in it says "Demo placeholder, replace before any farmer sees
-it", and the reviewer is "Demo seed". It exists so the farmer flow can be walked
-locally: plant it, get reminders, record a harvest. Do not ship it.
+`scripts/seed_product.py` and `scripts/seed_demo_product.py` exist for tests and for
+walking the farmer flow locally. They are not how products reach a real database: in
+production every product comes from a confirmed survey, as described above.
+
+```bash
+python -m scripts.seed_demo_product   # a complete, trackable demo product for local use
+```
+
+`seed_demo_product` adds "Demo: Orange-fleshed sweet potato" and publishes it through
+the same `product_service.mark_trackable` rule the console uses. Every health
+statement in it says "Demo placeholder, replace before any farmer sees it", and the
+reviewer is "Demo seed". It exists so the farmer flow can be walked locally: plant
+it, get reminders, record a harvest. Do not ship it.
 
 ## M2 data pipeline
 
