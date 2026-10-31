@@ -25,7 +25,7 @@ INTERVAL_SECONDS = 60
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="AGUra reminder scheduler")
+    parser = argparse.ArgumentParser(description="Agura reminder scheduler")
     parser.add_argument("--once", action="store_true", help="Run one pass then exit")
     parser.add_argument("--interval", type=int, default=INTERVAL_SECONDS)
     args = parser.parse_args(argv)

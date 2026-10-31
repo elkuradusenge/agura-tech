@@ -236,7 +236,7 @@ def request_password_reset(db: Session, phone: str) -> str | None:
 
     send_sms(
         normalised,
-        f"AGUra: your reset code is {code}. It expires in "
+        f"Agura: your reset code is {code}. It expires in "
         f"{settings.password_reset_code_minutes} minutes.",
     )
     return code

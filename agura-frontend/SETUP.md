@@ -1,4 +1,4 @@
-# AGUra frontend
+# Agura frontend
 
 React 18, TypeScript, Vite, TanStack Query, Tailwind, Recharts, Lucide and Google Sans.
 One application, two audiences: a farmer app at `/app` and an internal console at `/admin`.

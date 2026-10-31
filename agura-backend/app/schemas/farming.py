@@ -105,7 +105,7 @@ class ProductWrite(BaseModel):
     def _max_after_min(cls, value: int | None, info) -> int | None:  # noqa: ANN001
         minimum = info.data.get("time_to_harvest_min_days")
         if value is not None and minimum is not None and value < minimum:
-            raise ValueError("time_to_harvest_max_days must be at least the minimum")
+            raise ValueError("time_to_harvest_max_days must be at least over the minimum")
         return value
 
 

@@ -50,7 +50,7 @@ class InvalidEnvironment(RuntimeError):
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
-    app_name: str = "AGUra API"
+    app_name: str = "Agura API"
     api_prefix: str = "/api/v1"
     environment: Literal["development", "test", "production", "prod"] = "development"
 
@@ -72,13 +72,13 @@ class Settings(BaseSettings):
 
     admin_bootstrap_email: str = "admin@agura.rw"
     admin_bootstrap_password: str | None = None
-    admin_bootstrap_name: str = "AGUra Administrator"
+    admin_bootstrap_name: str = "Agura Administrator"
 
     sms_enabled: bool = False
     sms_provider: Literal["console", "disabled", "africastalking"] = "console"
     sms_api_key: str | None = None
     sms_username: str | None = None
-    sms_sender_id: str = "AGUra"
+    sms_sender_id: str = "Agura"
 
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["debug", "info", "warning", "error", "critical"] = "info"

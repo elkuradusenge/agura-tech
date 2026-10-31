@@ -61,7 +61,7 @@ class AfricasTalkingProvider(SmsProvider):
     def __init__(self, settings: Settings) -> None:
         self._username = settings.sms_username or ""
         self._api_key = settings.sms_api_key or ""
-        self._sender = settings.sms_sender_id or "AGUra"
+        self._sender = settings.sms_sender_id or "Agura"
 
     def send(self, phone: str, body: str) -> SmsSendResult:
         if not self._username or not self._api_key:

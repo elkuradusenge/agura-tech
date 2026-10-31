@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     finally:
         session.close()
     broadcaster_bind(asyncio.get_running_loop())
-    logger.info("AGUra API %s starting in %s", __version__, settings.environment)
+    logger.info("Agura API %s starting in %s", __version__, settings.environment)
 
     # A survey job runs in a thread of this process, so a reload or a restart
     # leaves it stranded with nothing to pick it up. Put those back on the queue.
@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         job_recovery.recover_in_background()
 
     yield
-    logger.info("AGUra API stopping")
+    logger.info("Agura API stopping")
 
 
 def create_app() -> FastAPI:

@@ -43,7 +43,7 @@ export function StyleGuide() {
   return (
     <div className="mx-auto max-w-content space-y-12 px-4 py-12 sm:px-6">
       <header className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight">AGUra style guide</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Agura style guide</h1>
         <p className="muted max-w-2xl text-sm leading-relaxed">
           Google Sans, one Lucide icon set, status that carries text, 12px cards and inputs, pill
           buttons, and an 8px spacing grid. Colour values live in one file,{" "}
@@ -72,7 +72,7 @@ export function StyleGuide() {
         <Card className="space-y-4">
           <div className="space-y-1">
             <p className="muted font-mono text-xs">display / 48 / 700</p>
-            <p className="text-5xl font-bold tracking-tight">AGUra</p>
+            <p className="text-5xl font-bold tracking-tight">Agura</p>
           </div>
           <div className="space-y-1">
             <p className="muted font-mono text-xs">headline / 36 / 700</p>

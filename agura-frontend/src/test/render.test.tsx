@@ -59,7 +59,7 @@ describe("App", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("AGUra style guide")).toBeInTheDocument();
+    expect(await screen.findByText("Agura style guide")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Primary" })).toBeInTheDocument();
     // Every badge in the guide carries text, never colour alone. The default
     // language is Kinyarwanda, so the label is read from that dictionary.

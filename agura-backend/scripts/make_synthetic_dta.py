@@ -253,7 +253,7 @@ def write_synthetic_dta(path: str | Path, person_rows: int = 3000, seed: int = 7
     pyreadstat.write_dta(
         frame,
         str(destination),
-        file_label="AGUra synthetic census",
+        file_label="Agura synthetic census",
         column_labels=column_labels,
         variable_value_labels={
             name: labels for name, labels in VALUE_LABELS.items() if name in columns

@@ -18,7 +18,7 @@ from scripts.seed_product import seed_mushroom_product
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Seed AGUra defaults")
+    parser = argparse.ArgumentParser(description="Seed Agura defaults")
     parser.add_argument(
         "--reset-settings",
         action="store_true",

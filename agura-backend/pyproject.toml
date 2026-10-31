@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agura-backend"
 version = "0.1.0"
-description = "AGUra backend: census analysis and crop adoption platform for Rwanda"
+description = "Agura backend: census analysis and crop adoption platform for Rwanda"
 requires-python = ">=3.11"
 dynamic = ["dependencies"]
 

@@ -1,4 +1,4 @@
-"""Package marker for the AGUra backend."""
+"""Package marker for the Agura backend."""
 
 __all__ = ["__version__"]
 

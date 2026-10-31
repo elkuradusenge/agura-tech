@@ -1,6 +1,6 @@
-# AGUra backend setup
+# Agura backend setup
 
-FastAPI service for AGUra (aguka means to grow): it reads the Rwanda Population and
+FastAPI service for Agura (aguka means to grow): it reads the Rwanda Population and
 Housing Census 2022 microdata, aggregates it, and runs the crop adoption platform.
 This repository is independent from `agura-frontend`. They talk only through the REST
 API and the WebSocket described in the product specification.

@@ -133,7 +133,7 @@ def seed_demo_product(db: Session) -> Product:
         "Supports vitamin A intake, which matters for young children. " + DEMO_NOTE + "."
     )
     product.reviewer_name = "Demo seed"
-    product.reviewer_organisation = "AGUra development"
+    product.reviewer_organisation = "Agura development"
     product.review_date = date.today()
     product.needs_expert_review = True
     product.growing_steps_validated = True

@@ -38,7 +38,7 @@ def claim_next_job_id() -> object | None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="AGUra survey job worker")
+    parser = argparse.ArgumentParser(description="Agura survey job worker")
     parser.add_argument("--once", action="store_true", help="Run at most one job then exit")
     args = parser.parse_args(argv)
 

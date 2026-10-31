@@ -375,11 +375,11 @@ export function LandingPage() {
             <h2 className="text-sm font-medium text-ink-heading">{t("landing.footer.contact")}</h2>
             <a className="press flex items-center gap-2 text-primary-text hover:underline" href="mailto:hello@agura.rw">
               <MessageSquare aria-hidden className="h-4 w-4" />
-              hello@agura.rw
+              e.kuradusen@alustudent.com
             </a>
             <a className="press flex items-center gap-2 text-primary-text hover:underline" href="tel:+250788000000">
               <Phone aria-hidden className="h-4 w-4" />
-              +250 788 000 000
+              +250 792 568 899
             </a>
             <a className="press flex items-center gap-2 text-primary-text hover:underline" href="#faq-title">
               <CircleHelp aria-hidden className="h-4 w-4" />

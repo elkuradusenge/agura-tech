@@ -14,19 +14,19 @@ DEFAULT_TEMPLATES: tuple[dict[str, Any], ...] = (
     {
         "key": "task.reminder.morning",
         "in_app": "Good morning. Today: {task} for {product}. Due in the morning.",
-        "sms": "AGUra: {task} for {product} this morning. Reply when done.",
+        "sms": "Agura: {task} for {product} this morning. Reply when done.",
         "variables": ["task", "product"],
     },
     {
         "key": "task.reminder.evening",
         "in_app": "Good evening. Today: {task} for {product}. Due in the evening.",
-        "sms": "AGUra: {task} for {product} this evening. Reply when done.",
+        "sms": "Agura: {task} for {product} this evening. Reply when done.",
         "variables": ["task", "product"],
     },
     {
         "key": "task.missed",
         "in_app": "You missed a task yesterday: {task} for {product}. Do it today if you can.",
-        "sms": "AGUra: missed {task} for {product}. Please catch up today.",
+        "sms": "Agura: missed {task} for {product}. Please catch up today.",
         "variables": ["task", "product"],
     },
     {
@@ -44,13 +44,13 @@ DEFAULT_TEMPLATES: tuple[dict[str, Any], ...] = (
     {
         "key": "specialist.request.updated",
         "in_app": "Your specialist request is now {status}.",
-        "sms": "AGUra: your specialist request is now {status}.",
+        "sms": "Agura: your specialist request is now {status}.",
         "variables": ["status"],
     },
     {
         "key": "funding.interest.updated",
         "in_app": "Your funding interest is now {status}.",
-        "sms": "AGUra: your funding interest is now {status}.",
+        "sms": "Agura: your funding interest is now {status}.",
         "variables": ["status"],
     },
 )
